@@ -207,4 +207,45 @@ async function shortenUrl(chatId, url) {
     }
 }
 
+
+
+// Command: /account (Fetch User Dashboard Stats)
+bot.onText(/\/account/, async (msg) => {
+    const chatId = msg.chat.id;
+    const apiToken = getUserToken(chatId);
+
+    if (!apiToken) {
+        bot.sendMessage(chatId, "Please set your API token first using /setapi YOUR_API_TOKEN");
+        return;
+    }
+
+    try {
+        const apiUrl = `https://indiaearnx.com/api?api=${apiToken}&format=json`;
+        const response = await axios.get(apiUrl);
+
+        if (response.data && response.data.status === "success") {
+            const stats = response.data;
+
+            const accountDetails = `
+<b>👤 Account Dashboard</b>
+
+🔹 <b>Total Earnings:</b> $${stats.balance}
+🔹 <b>Total Clicks:</b> ${stats.total_clicks}
+🔹 <b>Average CPM:</b> $${stats.cpm}
+🔹 <b>Referral Earnings:</b> $${stats.referral_earnings}
+🔹 <b>Total Withdrawn:</b> $${stats.total_withdrawn}
+
+📌 <b>🔗 Visit Dashboard:</b> <a href="https://indiaearnx.com/member">Click Here</a>
+`;
+
+            bot.sendMessage(chatId, accountDetails, { parse_mode: "HTML" });
+        } else {
+            bot.sendMessage(chatId, "❌ Unable to fetch account details. Please check your API token.");
+        }
+    } catch (error) {
+        console.error("Fetch Account Stats Error:", error);
+        bot.sendMessage(chatId, "❌ An error occurred while fetching your account details. Try again later.");
+    }
+});
+
 // --------------- END OF NEW CODE ----------------
