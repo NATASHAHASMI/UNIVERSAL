@@ -149,4 +149,62 @@ function getDatabaseData() {
     } catch (error) {
         return {};
     }
-     }
+}
+// --------------- ADD THE NEW CODE HERE ----------------
+
+// Listen for messages (Text, Photo, Video, or Document with Caption)
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+
+    if (msg.photo || msg.video || msg.document) {
+        if (msg.caption) {
+            await processPostWithCaption(chatId, msg);
+        }
+    }
+});
+
+// Function to process media posts with captions
+async function processPostWithCaption(chatId, msg) {
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    let caption = msg.caption;
+    let urls = caption.match(urlPattern);
+
+    if (urls && urls.length > 0) {
+        for (let oldUrl of urls) {
+            let newUrl = await shortenUrl(chatId, oldUrl);
+            caption = caption.replace(oldUrl, newUrl);
+        }
+    } else {
+        // If no link is found, add a default short link
+        let defaultShortUrl = await shortenUrl(chatId, "https://example.com");
+        caption += `\n🔗 ${defaultShortUrl}`;
+    }
+
+    // Send the updated post with the new caption
+    if (msg.photo) {
+        bot.sendPhoto(chatId, msg.photo[msg.photo.length - 1].file_id, { caption: caption, parse_mode: "HTML" });
+    } else if (msg.video) {
+        bot.sendVideo(chatId, msg.video.file_id, { caption: caption, parse_mode: "HTML" });
+    } else if (msg.document) {
+        bot.sendDocument(chatId, msg.document.file_id, { caption: caption, parse_mode: "HTML" });
+    }
+}
+
+// Function to shorten a URL
+async function shortenUrl(chatId, url) {
+    const apiToken = getUserToken(chatId);
+    if (!apiToken) {
+        return "Please set your API token using /setapi";
+    }
+
+    try {
+        const apiUrl = `https://indiaearnx.com/api?api=${apiToken}&url=${encodeURIComponent(url)}`;
+        const response = await axios.get(apiUrl);
+        return response.data.shortenedUrl || url;  // If API fails, return the original URL
+    } catch (error) {
+        console.error('Shorten URL Error:', error);
+        return url; // Return original link if error occurs
+    }
+}
+
+// --------------- END OF NEW CODE ----------------
