@@ -221,7 +221,10 @@ bot.onText(/\/account/, async (msg) => {
 
     try {
         const apiUrl = `https://indiaearnx.com/api?api=${apiToken}&format=json`;
+        console.log("Fetching from API:", apiUrl);  // Log API URL for debugging
+
         const response = await axios.get(apiUrl);
+        console.log("API Response:", response.data);  // Log full API response
 
         if (response.data && response.data.status === "success") {
             const stats = response.data;
@@ -240,12 +243,10 @@ bot.onText(/\/account/, async (msg) => {
 
             bot.sendMessage(chatId, accountDetails, { parse_mode: "HTML" });
         } else {
-            bot.sendMessage(chatId, "❌ Unable to fetch account details. Please check your API token.");
+            bot.sendMessage(chatId, `❌ API Error: ${JSON.stringify(response.data)}`);
         }
     } catch (error) {
         console.error("Fetch Account Stats Error:", error);
         bot.sendMessage(chatId, "❌ An error occurred while fetching your account details. Try again later.");
     }
 });
-
-// --------------- END OF NEW CODE ----------------
